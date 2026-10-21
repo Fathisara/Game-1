@@ -119,11 +119,9 @@ $('sw').addEventListener('touchstart',e=>{e.preventDefault();swap()});$('sw').ad
 // HIGH-CONTRAST HOLOGRAPHIC TACTICAL RADAR
 function drawMap(){
   const s=8;
-  // Radar background
   mc.fillStyle='rgba(8,16,26,.92)';
   mc.fillRect(0,0,128,128);
 
-  // High-contrast bunker walls (Deep blue fill + luminous cyan borders)
   for(let y=0;y<16;y++)for(let x=0;x<16;x++){
     if(M[y][x]!=='0'){
       mc.fillStyle='#1c3148';
@@ -134,13 +132,11 @@ function drawMap(){
     }
   }
 
-  // Supply pick-ups (Color-coded)
   for(const p of pk){
     mc.fillStyle=p.k==='med'?'#00ff88':p.k==='armor'?'#d400ff':'#ffcc00';
     mc.fillRect(p.x*s-2,p.y*s-2,5,5);
   }
 
-  // Operatives: Bright glowing RED radar blips with white core
   for(const e of en){
     const isBoss=e.t===4;
     mc.fillStyle=isBoss?'#ff0055':'#ff2244';
@@ -153,7 +149,6 @@ function drawMap(){
     mc.fill();
   }
 
-  // Player Vision Cone (Translucent Cyan Sweep)
   mc.fillStyle='rgba(0,243,255,.32)';
   mc.beginPath();
   mc.moveTo(px*s,py*s);
@@ -161,7 +156,6 @@ function drawMap(){
   mc.closePath();
   mc.fill();
 
-  // Player Directional Arrow (Crisp White Chevron)
   mc.fillStyle='#ffffff';
   mc.beginPath();
   const tx=px*s+Math.cos(a)*6.5,ty=py*s+Math.sin(a)*6.5;
@@ -175,8 +169,7 @@ const hits=[];function addHit(w){const el=document.createElement('div');el.class
 function hurt(n,ang){
   sfx.hurt();if(ar>0){const ab=Math.min(ar,n*.6);ar-=ab;n-=ab}
   hp-=n;addHit(ang);hud();$('dmg').style.opacity=1;setTimeout(()=>$('dmg').style.opacity=0,150);
-  if(hp<=0){hp=0;over=true;running=false;sfx.over();$('t').textContent='SIGNAL LOST';$('s').textContent='Sector cleared to Wave '+wave+' · '+kills+' Eliminations.';$('go').textContent='REBOOT';$('ov').style.display='flex'}
-  $('hpf').style.width=hp+'%';
+  if(hp<=0){hp=0;over=true;running=false;sfx.over();$('t').textContent='SIGNAL LOST';$('s').textContent='Sector cleared to Wave '+wave+' · '+kills+' Eliminations.';$('go').textContent='REBOOT';$('ov').style.display='flex'}$('hpf').style.width=hp+'%';
 }
 
 // SPARK PARTICLES
@@ -403,35 +396,29 @@ for(let y=0;y<16;y++)for(let x=0;x<16;x++)if(M[y][x]!=='0'){
 function buildEnemyRifle(neonHex){
   const g=new THREE.Group();
   const matGun=new THREE.MeshStandardMaterial({color:0x1b222d,roughness:.3,metalness:.85});
-  const matNeon=new THREE.MeshBasicMaterial({color:neonHex}); // Max-brightness neon
+  const matNeon=new THREE.MeshBasicMaterial({color:neonHex});
 
-  // Rifle Body
   const body=new THREE.Mesh(new THREE.BoxGeometry(.14,.18,.75),matGun);
   body.position.set(0,0,.15);g.add(body);
   
-  // Magazine
   const mag=new THREE.Mesh(new THREE.BoxGeometry(.08,.24,.14),matGun);
   mag.position.set(0,-.16,.1);g.add(mag);
 
-  // Barrel & Suppressor
   const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.5,8),matGun);
   barrel.rotation.x=Math.PI/2;barrel.position.set(0,.03,.6);g.add(barrel);
   
   const supp=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.4,10),matGun);
   supp.rotation.x=Math.PI/2;supp.position.set(0,.03,.9);g.add(supp);
 
-  // Glowing Neon Top Energy Rail & Under-Barrel Line
   const topRail=new THREE.Mesh(new THREE.BoxGeometry(.1,.06,.55),matNeon);
   topRail.position.set(0,.12,.15);g.add(topRail);
 
   const underLaser=new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.45),matNeon);
   underLaser.position.set(0,-.06,.55);g.add(underLaser);
 
-  // Muzzle Ring
   const mRing=new THREE.Mesh(new THREE.TorusGeometry(.065,.018,6,16),matNeon);
   mRing.position.set(0,.03,1.1);g.add(mRing);
 
-  // Muzzle Anchor
   const muzzle=new THREE.Object3D();
   muzzle.position.set(0,.03,1.2);
   g.add(muzzle);
@@ -452,14 +439,12 @@ function mkSkinnedEnemy(e){
   const isBoss=e.t===4;
   const neonHex=isBoss?0xd400ff:0x00f3ff;
 
-  // Search bones with robust fuzzy matching
   let rHandBone=null,spineBone=null;
   clone.traverse(o=>{
     if(o.isBone){
       if(/righthand|hand.*r|right.*hand/i.test(o.name))rHandBone=o;
       if(/spine/i.test(o.name)&&!spineBone)spineBone=o;
     }
-    // Deep Obsidian Armor with Glowing Neon Visor
     if(o.isMesh&&o.material){
       o.material=o.material.clone();
       o.material.skinning=true;
@@ -478,18 +463,27 @@ function mkSkinnedEnemy(e){
     }
   });
 
-  // Glowing Chest Energy Core (Matches "VECTER" Concept)
   const coreMat=new THREE.MeshBasicMaterial({color:neonHex});
   const chestCore=new THREE.Mesh(new THREE.OctahedronGeometry(.18),coreMat);
-  root.add(chestCore);
+  if(spineBone){
+    spineBone.add(chestCore);
+    chestCore.position.set(0,.15,.2);
+  }else{
+    root.add(chestCore);
+    chestCore.position.set(0,1.5,.22);
+  }
 
-  // Tactical Rifle Attached to Root (Scale 1.0x - Never Compressed!)
+  // Attach weapon directly to right hand bone
   const rifle=buildEnemyRifle(neonHex);
-  // Default forward tactical position
-  rifle.position.set(-0.35,1.35,0.35);
-  root.add(rifle);
+  if(rHandBone){
+    rHandBone.add(rifle);
+    rifle.position.set(0,.08,.05);
+    rifle.rotation.set(Math.PI/2,0,Math.PI/2);
+  }else{
+    root.add(rifle);
+    rifle.position.set(-0.35,1.35,0.35);
+  }
 
-  // Animation Controller
   const mixer=new THREE.AnimationMixer(clone);
   const runClip=THREE.AnimationClip.findByName(ANIMATIONS,'Run');
   const idleClip=THREE.AnimationClip.findByName(ANIMATIONS,'Idle');
@@ -592,7 +586,7 @@ function draw(dt){
   sync(en,em,e=>mkSkinnedEnemy(e),(e,m)=>{
     const dx=px-e.x,dy=py-e.y,mv=!!e.mv;
     m.position.set(e.x*S,0,e.y*S);
-    m.rotation.y=(e.fa!==undefined?e.fa:Math.atan2(dx,dy))+Math.PI;
+    m.rotation.y=(e.fa!==undefined?e.fa:Math.atan2(dx,dy));
 
     const u=m.userData;
     if(u.mixer){
@@ -607,35 +601,6 @@ function draw(dt){
           u.idleAction.reset().fadeIn(0.2).play();
           u.isMoving=false;
         }
-      }
-
-      // CRITICAL: Forces CPU bone matrix recalculation so hand position is never (0,0,0)
-      u.clone.updateWorldMatrix(true,true);
-    }
-
-    m.updateMatrixWorld();
-
-    // Lock weapon directly to animated right palm
-    if(u.rifle){
-      if(u.rHandBone){
-        u.rHandBone.getWorldPosition(vTemp);
-        m.worldToLocal(vTemp);
-        u.rifle.position.set(vTemp.x,vTemp.y+.04,vTemp.z+.15);
-      }else{
-        // Stable tactical chest grip fallback
-        u.rifle.position.set(-0.35,1.35,0.35);
-      }
-      u.rifle.rotation.set(0,0,0);
-    }
-
-    // Lock glowing core to chest
-    if(u.chestCore){
-      if(u.spineBone){
-        u.spineBone.getWorldPosition(vTemp);
-        m.worldToLocal(vTemp);
-        u.chestCore.position.set(vTemp.x,vTemp.y,vTemp.z+.22);
-      }else{
-        u.chestCore.position.set(0,1.5,.22);
       }
     }
   });
